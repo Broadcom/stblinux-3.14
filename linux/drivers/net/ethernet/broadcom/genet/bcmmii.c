@@ -66,7 +66,7 @@ static int bcmgenet_mii_read(struct mii_bus *bus, int phy_id, int location)
 	if (!(bus->phy_ignore_ta_mask & 1 << phy_id) &&
 	    (ret & MDIO_READ_FAIL)) {
 		netif_dbg(priv, hw, dev, "MDIO read failure\n");
-		ret = 0;
+		ret = 0xffff;
 	}
 	return ret & 0xffff;
 }
@@ -481,8 +481,14 @@ static void bcmgenet_mii_free(struct bcmgenet_priv *priv)
 static int bcmgenet_fixed_phy_link_update(struct net_device *dev,
 					  struct fixed_phy_status *status)
 {
-	if (dev && dev->phydev && status)
-		status->link = dev->phydev->link;
+	struct bcmgenet_priv *priv;
+	u32 reg;
+
+	if (dev && dev->phydev && status) {
+		priv = netdev_priv(dev);
+		reg = bcmgenet_umac_readl(priv, UMAC_MODE);
+		status->link = !!(reg & MODE_LINK_STATUS);
+	}
 
 	return 0;
 }
@@ -681,10 +687,8 @@ static int bcmgenet_mii_old_dt_init(struct bcmgenet_priv *priv)
 	int ret;
 
 	ret = mdiobus_register(priv->mii_bus);
-	if (ret) {
-		kfree(priv->mii_bus->irq);
+	if (ret)
 		return ret;
-	}
 
 	/* Ensure we set a correct phy_type to phy_interface
 	 * translation
@@ -812,7 +816,8 @@ int bcmgenet_mii_init(struct net_device *dev)
 
 	return 0;
 out:
-	bcmgenet_mii_free(priv);
+	kfree(priv->mii_bus->irq);
+	mdiobus_free(priv->mii_bus);
 	return ret;
 }
 

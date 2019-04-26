@@ -788,17 +788,19 @@ static void turn_off(void __iomem *base)
 static void enter_l23(struct brcm_pcie *pcie)
 {
 	void __iomem *base = pcie->base;
-	int timeout = 1000;
-	int l23;
+	int l23, i;
 
 	/* assert request for L23 */
 	wr_fld_rb(base + PCIE_MISC_PCIE_CTRL, 0x1, 0, 1);
-	do {
-		/* poll L23 status */
-		l23 = __raw_readl(base + PCIE_MISC_PCIE_STATUS) & (1 << 6);
-	} while (--timeout && !l23);
 
-	if (!timeout)
+	/* Wait up to 30 msec for L23 */
+	l23 = __raw_readl(base + PCIE_MISC_PCIE_STATUS) & (1 << 6);
+	for (i = 0; i < 15 && !l23; i++) {
+		usleep_range(2000, 2400);
+		l23 = __raw_readl(base + PCIE_MISC_PCIE_STATUS) & (1 << 6);
+	}
+
+	if (!l23)
 		dev_err(pcie->dev, "failed to enter L23\n");
 }
 

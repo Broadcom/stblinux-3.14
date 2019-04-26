@@ -308,13 +308,9 @@ release-classic:
 	mv images/* release/$(VERSION)/
 
 release-buildroot:
-	# Accept missing buildroot directory for stb-3.14, but bail otherwise.
 	@if [ ! -d ../buildroot ]; then \
 		echo "Buildroot doesn't exist."; \
-		echo "$(VERSION)" | grep '^314' >/dev/null; \
-		if [ $$? != 0 ]; then \
-			exit 1; \
-		fi; \
+		exit 1 ; \
 	fi
 	@echo "Wiping any existing buildroot builds..."
 	rm -rf ../buildroot/output

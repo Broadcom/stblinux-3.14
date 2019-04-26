@@ -583,11 +583,6 @@ static int configure_main_hash(struct dma_region *regions, int max,
 	sort(exclude, num_exclude, sizeof(exclude[0]), &dma_region_compare,
 			NULL);
 
-	/* Make sure that phys_addr_t is large enough compared to the
-	 * range address encoding
-	 */
-	BUILD_BUG_ON(sizeof(phys_addr_t) < sizeof(range->addr));
-
 	/*
 	 * Hash up to MAX_HASH_SIZE_BANK from each memory bank, with a
 	 * total limit of MAX_HASH_SIZE. Account for collisions with the

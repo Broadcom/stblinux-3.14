@@ -566,7 +566,7 @@ __v7_ca9mp_proc_info:
 __v7_ca8_proc_info:
 	.long	0x410fc080
 	.long	0xff0ffff0
-	__v7_proc __v7_ca8_proc_info, __v7_setup, proc_fns = ca8_processor_functions
+	__v7_proc __v7_setup, proc_fns = ca8_processor_functions
 	.size	__v7_ca8_proc_info, . - __v7_ca8_proc_info
 
 #endif	/* CONFIG_ARM_LPAE */

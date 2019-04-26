@@ -464,6 +464,14 @@ function handle_opt_6()
 	echo ""
 	echo "Finished refreshing the rootfs."
 	echo ""
+	echo "Sample boot command line:"
+	echo ""
+	echo "  boot $tftphost:$tftppath/vmlinuz-$plat"
+	echo ""
+	echo "To mount the filesystem now:"
+	echo ""
+	echo "  mount ${hdd_dev}1 /mnt/hd"
+	echo ""
 	exit 0
 }
 

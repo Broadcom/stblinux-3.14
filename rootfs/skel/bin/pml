@@ -232,11 +232,20 @@ function one_pass
 	echo "------------------------------"
 }
 
+# Prevent ^C from getting into the kernel which can prematurely
+# terminate drivers resume functions
+function exit_loop
+{
+	exit 1
+}
+
+trap exit_loop 2
+
 curloop=0
 if [ "$loops" -lt "0" ] ; then
         while :
         do
-                 (( curloop++ ))
+                curloop=$((curloop + 1))
                 one_pass $curloop "" 
         done
 else
