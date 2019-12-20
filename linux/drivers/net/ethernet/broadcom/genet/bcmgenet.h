@@ -27,6 +27,7 @@
 #include <linux/mii.h>
 #include <linux/if_vlan.h>
 #include <linux/phy.h>
+#include <linux/ethtool.h>
 
 /* BCMGENET device tree properties */
 #define BRCM_PHY_ID_AUTO	0x100
@@ -376,6 +377,7 @@ struct bcmgenet_mib_counters {
 #define  EXT_ENERGY_DET_MASK		(1 << 12)
 
 #define EXT_RGMII_OOB_CTRL		0x0C
+#define  RGMII_MODE_EN_V123		(1 << 0)
 #define  RGMII_LINK			(1 << 4)
 #define  OOB_DISABLE			(1 << 5)
 #define  RGMII_MODE_EN			(1 << 6)
@@ -647,8 +649,10 @@ struct bcmgenet_priv {
 	/* WOL */
 	struct	clk *clk_wol;
 	u32	wolopts;
+	u8 sopass[SOPASS_MAX];
 	int	wol_irq;
 	unsigned int wol_irq_disabled;
+	bool	wol_active;
 
 	struct bcmgenet_mib_counters mib;
 

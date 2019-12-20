@@ -299,28 +299,51 @@ void board_pinmux_setup(void)
 	PINMUX(11, gpio_91, 1);		/* UARTC TX */
 	PINMUX(11, gpio_92, 1);		/* UARTC RX */
 
-	AON_PINMUX(1, aon_gpio_08, 6);	/* SDIO */
-	AON_PINMUX(1, aon_gpio_12, 5);
-	AON_PINMUX(1, aon_gpio_13, 5);
-	AON_PINMUX(2, aon_gpio_14, 4);
-	AON_PINMUX(2, aon_gpio_15, 5);
-	AON_PINMUX(2, aon_gpio_16, 5);
-	AON_PINMUX(2, aon_gpio_17, 5);
-	AON_PINMUX(2, aon_gpio_18, 5);
-	AON_PINMUX(2, aon_gpio_19, 5);
-	AON_PINMUX(2, aon_gpio_20, 5);
+	if (!strcmp(brcm_cfe_boardname, "BCM97362SFF_4L")) {
+		/* SD card mux + pullups */
+		PINMUX(14, gpio_113, 3);
+		PINMUX(14, gpio_114, 3);
+		PINMUX(14, gpio_116, 3);
+		PINMUX(14, gpio_117, 3);
+		PINMUX(14, gpio_118, 3);
+		PINMUX(15, gpio_119, 3);
+		PINMUX(15, gpio_120, 3);
+		PINMUX(15, gpio_121, 3);
+		PINMUX(15, gpio_122, 3);
 
-	/* enable SDIO pullups */
-	AON_PADCTRL(0, aon_gpio_08_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_12_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_13_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_14_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_15_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_16_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_17_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_18_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_19_pad_ctrl, 2);
-	AON_PADCTRL(1, aon_gpio_20_pad_ctrl, 2);
+		PADCTRL(7, gpio_113_pad_ctrl, 2);
+		PADCTRL(7, gpio_114_pad_ctrl, 2);
+		PADCTRL(7, gpio_116_pad_ctrl, 2);
+		PADCTRL(8, gpio_117_pad_ctrl, 2);
+		PADCTRL(8, gpio_118_pad_ctrl, 2);
+		PADCTRL(8, gpio_119_pad_ctrl, 2);
+		PADCTRL(8, gpio_120_pad_ctrl, 2);
+		PADCTRL(8, gpio_121_pad_ctrl, 2);
+		PADCTRL(8, gpio_122_pad_ctrl, 2);
+	} else {
+		AON_PINMUX(1, aon_gpio_08, 6);	/* SDIO */
+		AON_PINMUX(1, aon_gpio_12, 5);
+		AON_PINMUX(1, aon_gpio_13, 5);
+		AON_PINMUX(2, aon_gpio_14, 4);
+		AON_PINMUX(2, aon_gpio_15, 5);
+		AON_PINMUX(2, aon_gpio_16, 5);
+		AON_PINMUX(2, aon_gpio_17, 5);
+		AON_PINMUX(2, aon_gpio_18, 5);
+		AON_PINMUX(2, aon_gpio_19, 5);
+		AON_PINMUX(2, aon_gpio_20, 5);
+
+		/* enable SDIO pullups */
+		AON_PADCTRL(0, aon_gpio_08_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_12_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_13_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_14_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_15_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_16_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_17_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_18_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_19_pad_ctrl, 2);
+		AON_PADCTRL(1, aon_gpio_20_pad_ctrl, 2);
+	}
 
 	if (!strcmp(brcm_cfe_boardname, "BCM973627SVMB")) {
 		PINMUX(14, gpio_111, 1);	/* RGMII_RX_DV */

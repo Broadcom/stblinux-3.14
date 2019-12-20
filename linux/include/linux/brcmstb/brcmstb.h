@@ -87,6 +87,16 @@
 
 #endif
 
+#define DEV_RD(x) (*((volatile unsigned long *)(x)))
+#define DEV_WR(x, y) do { *((volatile unsigned long *)(x)) = (y); } while (0)
+#define DEV_UNSET(x, y) do { DEV_WR((x), DEV_RD(x) & ~(y)); } while (0)
+#define DEV_SET(x, y) do { DEV_WR((x), DEV_RD(x) | (y)); } while (0)
+
+#define DEV_WR_RB(x, y) do { DEV_WR((x), (y)); DEV_RD(x); } while (0)
+#define DEV_SET_RB(x, y) do { DEV_SET((x), (y)); DEV_RD(x); } while (0)
+#define DEV_UNSET_RB(x, y) do { DEV_UNSET((x), (y)); DEV_RD(x); } while (0)
+
+
 /***********************************************************************
  * BCHP header lists
  *
@@ -326,6 +336,23 @@
 #include <linux/brcmstb/7362a0/bchp_usb_ctrl.h>
 #include <linux/brcmstb/7362a0/bchp_wktmr.h>
 #include <linux/brcmstb/7362a0/brcmirq.h>
+
+#define BCHP_REG_IS_EBI(x)	\
+	((x) >= BCHP_EBI_REG_START && (x) <= BCHP_EBI_REG_END)
+
+/* BRCM_PROD_ID() not using BDEV_RD that we need to re-define below */
+#define DEV_BRCM_PROD_ID()	({ \
+	u32 reg = DEV_RD(BVIRTADDR(BCHP_SUN_TOP_CTRL_PRODUCT_ID)); \
+	(reg >> 28 ? reg >> 16 : reg >> 8); \
+	})
+
+#define BCHP_EBI_REG_OFFSET(x)	\
+	((BCHP_REG_IS_EBI((x)) && DEV_BRCM_PROD_ID() == 0x73627) ? \
+	 0x400 : 0)
+
+#define BDEV_RD(x)	(DEV_RD(BVIRTADDR(x + BCHP_EBI_REG_OFFSET(x))))
+#define BDEV_WR(x, y) do { DEV_WR(BVIRTADDR(x + \
+			BCHP_EBI_REG_OFFSET(x)), (y)); } while (0)
 
 #elif defined(CONFIG_BCM7425B0)
 #include <linux/brcmstb/7425b0/bchp_aon_ctrl.h>
@@ -813,17 +840,12 @@
 
 #if !defined(__ASSEMBLY__)
 
-#define DEV_RD(x) (*((volatile unsigned long *)(x)))
-#define DEV_WR(x, y) do { *((volatile unsigned long *)(x)) = (y); } while (0)
-#define DEV_UNSET(x, y) do { DEV_WR((x), DEV_RD(x) & ~(y)); } while (0)
-#define DEV_SET(x, y) do { DEV_WR((x), DEV_RD(x) | (y)); } while (0)
-
-#define DEV_WR_RB(x, y) do { DEV_WR((x), (y)); DEV_RD(x); } while (0)
-#define DEV_SET_RB(x, y) do { DEV_SET((x), (y)); DEV_RD(x); } while (0)
-#define DEV_UNSET_RB(x, y) do { DEV_UNSET((x), (y)); DEV_RD(x); } while (0)
-
+#ifndef BDEV_RD
 #define BDEV_RD(x) (DEV_RD(BVIRTADDR(x)))
+#endif
+#ifndef BDEV_WR
 #define BDEV_WR(x, y) do { DEV_WR(BVIRTADDR(x), (y)); } while (0)
+#endif
 #define BDEV_UNSET(x, y) do { BDEV_WR((x), BDEV_RD(x) & ~(y)); } while (0)
 #define BDEV_SET(x, y) do { BDEV_WR((x), BDEV_RD(x) | (y)); } while (0)
 

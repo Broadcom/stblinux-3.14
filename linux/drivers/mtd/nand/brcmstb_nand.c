@@ -310,6 +310,12 @@ static inline bool has_flash_dma(struct brcmstb_nand_controller *ctrl)
 	return ctrl->flash_dma_base;
 }
 
+static inline void disable_flash_dma_xfer(struct brcmstb_nand_controller *ctrl)
+{
+	if (has_flash_dma(ctrl))
+		ctrl->flash_dma_base = 0;
+}
+
 static inline bool flash_dma_buf_ok(const void *buf)
 {
 	return buf && !is_vmalloc_addr(buf) &&
@@ -532,11 +538,24 @@ static void brcmstb_nand_wp_set(struct mtd_info *mtd, int wp)
 
 }
 
+static bool is_mtd_oops_in_progress(void)
+{
+	int i = 0;
+#ifdef CONFIG_MTD_OOPS
+	if (oops_in_progress && smp_processor_id()) {
+		int cpu = 0;
+		for_each_online_cpu(cpu)
+			++i;
+	}
+#endif
+	return i == 1 ? true : false;
+}
+
 static int brcmstb_nand_ctrl_busy_poll(struct mtd_info *mtd, u32 mask)
 {
 	struct nand_chip *chip = mtd->priv;
 	struct brcmstb_nand_host *host = chip->priv;
-	unsigned long timeout = jiffies + msecs_to_jiffies(100);
+	unsigned long timeout = jiffies + msecs_to_jiffies(200);
 
 	if (!mask)
 		mask = BCHP_NAND_INTFC_STATUS_FLASH_READY_MASK;
@@ -722,16 +741,44 @@ static void brcmstb_nand_cmd_ctrl(struct mtd_info *mtd, int dat,
 	/* intentionally left blank */
 }
 
+static bool brcmstb_nand_wait_for_completion(struct mtd_info *mtd,
+					     struct nand_chip *this)
+{
+	struct nand_chip *chip = mtd->priv;
+	struct brcmstb_nand_host *host = chip->priv;
+	struct brcmstb_nand_controller *ctrl = host->ctrl;
+	bool err = false;
+	int sts;
+
+	if (is_mtd_oops_in_progress()) {
+		/* Switch to interrupt polling and PIO mode */
+		disable_flash_dma_xfer(ctrl);
+		sts = brcmstb_nand_ctrl_busy_poll(mtd, NAND_CTRL_RDY |
+						  FLASH_RDY);
+		err = (sts < 0) ? true : false;
+	} else {
+		unsigned long timeo = msecs_to_jiffies(200);
+		/* wait for completion interrupt */
+		sts = wait_for_completion_timeout(&ctrl->done, timeo);
+		err = (sts <= 0) ? true : false;
+	}
+
+	return err;
+}
+
 static int brcmstb_nand_waitfunc(struct mtd_info *mtd, struct nand_chip *this)
 {
 	struct nand_chip *chip = mtd->priv;
 	struct brcmstb_nand_host *host = chip->priv;
 	struct brcmstb_nand_controller *ctrl = host->ctrl;
-	unsigned long timeo = msecs_to_jiffies(100);
+	bool err = false;
 
 	DBG("%s: native cmd %d\n", __func__, ctrl->cmd_pending);
-	if (ctrl->cmd_pending &&
-			wait_for_completion_timeout(&ctrl->done, timeo) <= 0) {
+
+	if (ctrl->cmd_pending)
+		err = brcmstb_nand_wait_for_completion(mtd, this);
+
+	if (err) {
 		dev_err_ratelimited(&host->pdev->dev,
 			"timeout waiting for command %u (%ld)\n",
 			host->last_cmd, BDEV_RD(BCHP_NAND_CMD_START) >>
